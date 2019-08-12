@@ -23,7 +23,7 @@ A lightweight JS and HTML page to access, upload and delete from an Azure File S
 ## Additional information
  - the file uploader itself was a version of [blueimp's jQuery fileuploader](https://blueimp.github.io/jQuery-File-Upload/) with a few very specific overrides to work with `Azure Storage`
  - [azure-sdk-for-js](https://github.com/Azure/azure-sdk-for-js) was used for the main CRUD portions of the module
- - [a SPA branch exists](/tree/spa) for those who do not want or need full page reloads on clicks
+ - [a SPA branch exists](https://github.com/vandsh/simple-azure-file-storage-explorer/tree/spa) for those who do not want or need full page reloads on clicks
    - the original need for this was a `CRM` integration where the initial values for `sasToken`, `serviceGroup`, `share` and `directory` are fed in thru a `data:{...}` query parameter and then the page was merely updated vs reloaded since `CRM` did not like full page reloads.
    - this branch also features a much more trimmed down styling so it fits more into the form factor of things _like_ `CRM`
 

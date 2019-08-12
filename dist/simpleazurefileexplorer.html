@@ -1,207 +1,66 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous"><title>SimpleAzureFileExplorer</title></head><body><div class="text-light bg-dark"><h1 class="container p-2"><i class="fab fa-windows"></i>&nbsp;&nbsp;SimpleAzureFileExplorer</h1></div><div class="container"><div id="notification" class="alert alert-danger collapse" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> <span class="message"></span></div><div class="row p-2"><h3 class="col-lg-2 col-md-3"><i class="fas fa-hdd"></i>&nbsp;&nbsp;Share</h3><nav id="shares" class="nav nav-pills nav-justified col-lg-10 col-md-9"></nav></div><div class="row p-2"><h3 class="col-lg-2 col-md-3"><i class="fas fa-folder-open"></i>&nbsp;&nbsp;Path</h3><nav id="path" class="nav nav-pills nav-justified col-lg-10 col-md-9"></nav></div><div class="row p-2"><h3 class="col-lg-2 col-md-3"><i class="fas fa-directions"></i>&nbsp;&nbsp;Action</h3><ul class="nav nav-pills mb-3 col-lg-10 col-md-9" id="pills-tab" role="tablist"><li class="nav-item"><a class="nav-link active" id="pills-files-tab" data-toggle="pill" href="#pills-files" role="tab" aria-controls="pills-files" aria-selected="true">Files and Folders</a></li><li class="nav-item"><a class="nav-link" id="pills-newdir-tab" data-toggle="pill" href="#pills-newdir" role="tab" aria-controls="pills-newdir" aria-selected="false">New Folder</a></li><li class="nav-item"><a class="nav-link" id="pills-upload-tab" data-toggle="pill" href="#pills-upload" role="tab" aria-controls="pills-upload" aria-selected="false">Upload</a></li></ul><div class="tab-content col-md-12" id="pills-tabContent"><div class="tab-pane fade show active" id="pills-files" role="tabpanel" aria-labelledby="pills-files-tab"><table class="table table-striped table-hover table-sm table-responsive-md" id="directories"><thead><tr><th scope="col" class="text-center" style="width: 10%">Type</th><th scope="col" class="text-center" style="width: 10%">Download</th><th scope="col" class="text-center" style="width: 10%">Delete</th><th scope="col">Name <button><span onclick="refreshPage()" class="float-right btn btn-link"><i class="fas fa-sync"></i></span></button></th></tr></thead><tbody></tbody></table></div><div class="tab-pane fade" id="pills-newdir" role="tabpanel" aria-labelledby="pills-newdir-tab"><form id="newfolderform"><div class="form-row"><div class="form-group col-md-12"><hr><label for="newfoldername">New Folder:</label> <input type="text" class="form-control" id="newfoldername" aria-describedby="folderNameHelp" placeholder="Enter Folder Name" required> <small id="folderNameHelp" class="form-text text-muted">Please use alphanumeric names (can include _ - and .)</small><hr><button type="submit" class="btn btn-primary">Create</button></div></div></form></div><div class="tab-pane fade" id="pills-upload" role="tabpanel" aria-labelledby="pills-upload-tab"><hr><form id="fileupload" method="post" enctype="application/octet-stream"><div class="row fileupload-buttonbar"><div class="col-lg-6"><span class="btn btn-success fileinput-button" data-toggle="tooltip" title="Upload one or multiple files"><span>Upload:</span> <input type="file" name="files[]" id="fileinput" multiple="multiple"> </span><button type="submit" class="btn btn-primary start" data-toggle="tooltip" title="Start Upload for All"><span class="fas fa-upload" aria-label="start upload for all"></span></button> <button type="reset" class="btn btn-warning cancel" data-toggle="tooltip" title="Cancel Upload for All"><span class="fas fa-ban" aria-label="cancel upload for all"></span></button> <span class="fileupload-process" data-toggle="tooltip" title="Upload All Files Progress"></span></div><div class="col-lg-6 fileupload-progress fade show"><div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar progress-bar-success" style="width:0%;"></div></div><div class="progress-extended">&nbsp;</div></div></div><table role="presentation" class="table table-striped"><tbody class="files"></tbody></table></form></div></div></div></div></body><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script><script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script><script src="simpleazurefileexplorer.min.js"></script><script type="text/javascript">/* YOUR VALUES NEED TO BE PUT IN HERE */
-    var sasToken = "?sv=yourSAStoken";
-    var serviceGroup = 'https://yourResourceName.file.core.windows.net/';
-
-    /* GLOBALS */
-    var anonCred = new azfile.AnonymousCredential();
-    var pipeline = azfile.StorageURL.newPipeline(anonCred);
-
-    var serviceURL = new azfile.ServiceURL(
-        serviceGroup + sasToken,
-        pipeline
-    );
-
-    var selectedShare = qs("share");
-    var selectedDirectory = qs("directory");
+<!doctype html><html lang="en" style="font-size: 12px;"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous"><title>SimpleAzureFileExplorer</title></head><body><div><div id="notification" class="alert alert-danger collapse" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> <span class="message"></span></div><div class="row p-2"><h3 class="col-lg-1 col-md-3"><i class="fas fa-folder-open"></i>&nbsp;&nbsp;Path</h3><nav id="path" class="nav nav-pills nav-justified col-lg-11 col-md-9"></nav></div><div class="row p-2"><h3 class="col-lg-1 col-md-3"><i class="fas fa-directions"></i>&nbsp;&nbsp;Action</h3><ul class="nav nav-pills mb-3 col-lg-11 col-md-9" id="pills-tab" role="tablist"><li class="nav-item"><a class="nav-link active" id="pills-files-tab" data-toggle="pill" href="#pills-files" role="tab" aria-controls="pills-files" aria-selected="true">Files and Folders</a></li><li class="nav-item"><a class="nav-link" id="pills-newdir-tab" data-toggle="pill" href="#pills-newdir" role="tab" aria-controls="pills-newdir" aria-selected="false">New Folder</a></li><li class="nav-item"><a class="nav-link" id="pills-upload-tab" data-toggle="pill" href="#pills-upload" role="tab" aria-controls="pills-upload" aria-selected="false">Upload</a></li></ul><div class="tab-content col-md-12" id="pills-tabContent"><div class="tab-pane fade show active" id="pills-files" role="tabpanel" aria-labelledby="pills-files-tab"><table class="table table-striped table-hover table-sm table-responsive-md" id="directories"><thead><tr><th scope="col" class="text-center" style="width: 5%">Type</th><th scope="col" class="text-center" style="width: 5%">Delete</th><th scope="col">Name <span onclick="setState(selectedShare, selectedDirectory)" class="float-right btn btn-link"><i class="fas fa-sync"></i></span></th></tr></thead><tbody></tbody></table></div><div class="tab-pane fade" id="pills-newdir" role="tabpanel" aria-labelledby="pills-newdir-tab"><div class="form-row"><div class="form-group col-md-12"><hr><label for="newfoldername">New Folder:</label> <input type="text" class="form-control" id="newfoldername" aria-describedby="folderNameHelp" placeholder="Enter Folder Name" required> <small id="folderNameHelp" class="form-text text-muted">Please use alphanumeric names (can include _ - and .)</small><hr><button type="text" onclick="createNewFolder(selectedShare);" class="btn btn-primary">Create</button></div></div></div><div class="tab-pane fade" id="pills-upload" role="tabpanel" aria-labelledby="pills-upload-tab"><hr><form id="fileupload" method="post" enctype="application/octet-stream"><div class="row fileupload-buttonbar"><div class="col-lg-6"><span class="btn btn-success fileinput-button" data-toggle="tooltip" title="Upload one or multiple files"><span>Upload:</span> <input type="file" name="files[]" id="fileinput" multiple="multiple"> </span><button type="submit" class="btn btn-primary start" data-toggle="tooltip" title="Start Upload for All"><span class="fas fa-upload" aria-label="start upload for all"></span></button> <button type="reset" class="btn btn-warning cancel" data-toggle="tooltip" title="Cancel Upload for All"><span class="fas fa-ban" aria-label="cancel upload for all"></span></button> <span class="fileupload-process" data-toggle="tooltip" title="Upload All Files Progress"></span></div><div class="col-lg-6 fileupload-progress fade show"><div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar progress-bar-success" style="width:0%;"></div></div><div class="progress-extended">&nbsp;</div></div></div><table role="presentation" class="table table-striped"><tbody class="files"></tbody></table></form></div></div></div></div></body><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script><script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script><script src="simpleazurefileexplorer.js"></script><script type="text/javascript">/* Globals */
+    var dataFromQS = null;
+    var params = null;
+    var sasToken = null;
+    var serviceGroup = null;
+    var anonCred = null;
+    var pipeline = null;
+    var marker;
+    var serviceURL = null;
+    var selectedShare = null;
+    var selectedDirectory = null;
     var selectedDirectoryURL = null;
     var selectedShareURL = null;
 
-    if (!!selectedShare) {
-        selectedShareURL = azfile.ShareURL.fromServiceURL(serviceURL, selectedShare);
-        selectedDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, "");
-    }
+    function init() {
+        if (!dataFromQS) {
+            dataFromQS = qs("data");
+            params = JSON.parse(dataFromQS);
 
-    if (!!selectedDirectory && !!selectedShareURL) {
-        selectedDirectory = trimChar(selectedDirectory, "/");
-        selectedDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, selectedDirectory);
-    }
+            /* YOUR VALUES NEED TO BE PUT IN HERE */
+            sasToken = params.sasToken || qs("sasToken");
+            serviceGroup = params.serviceGroup || qs("serviceGroup");;
 
+            /* GLOBALS */
+            anonCred = new azfile.AnonymousCredential();
+            pipeline = azfile.StorageURL.newPipeline(anonCred);
+            marker;
+            serviceURL = new azfile.ServiceURL(
+                serviceGroup + sasToken,
+                pipeline
+            );
 
-    /* Async calls */
-    var marker;
-    async function listShares(selectedShare) {
-        var listSharesResponse = await serviceURL.listSharesSegment(azfile.Aborter.none);
-        marker = listSharesResponse.nextMarker;
-        $.each(listSharesResponse.shareItems, function (key, share) {
-            var shareURL = azfile.ShareURL.fromServiceURL(serviceURL, share.name);
-            var linkClass = "nav-link";
-            if (selectedShare == share.name) {
-                linkClass += " active";
-            }
-            $('#shares').append('<a class="' + linkClass + '" href="?share=' + share.name + '">' + share.name + '</a>');
-        })
-    }
-
-    async function listDirectoriesAndFiles(selectedShare, selectedDirectory, directoryUrl) {
-        try{
-            var listFilesAndDirectoriesResponse = await directoryUrl.listFilesAndDirectoriesSegment(azfile.Aborter.none);
-            marker = listFilesAndDirectoriesResponse.nextMarker;
-
-            //for each file in share/dir
-            $.each(listFilesAndDirectoriesResponse.segment.fileItems, function (key, file) {
-                var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
-                    '<td class="text-center"><button class="btn btn-success"><i class="fas fa-download" onclick="downloadFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"></i></button></td>' +
-                    '<td class="text-center"><button class="btn btn-danger"><i class="fas fa-trash" onclick="deleteFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"></i></button></td>' +
-                    '<td>' + file.name + '</td></tr>';
-                $('#directories tbody').append(rowMarkup);
-            });
-
-            //for each dir in share/dir
-            $.each(listFilesAndDirectoriesResponse.segment.directoryItems, function (key, directory) {
-                var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
-                    '<td class="text-center"> - </td>' +
-                    '<td class="text-center"><button class="btn btn-danger"><i class="fas fa-trash" onclick="deleteFolder(this)" data-directory="' + selectedDirectory + '" data-name="' + directory.name + '"></i></button></td>' +
-                    '<td><a href="?share=' + selectedShare + '&directory=' + selectedDirectory + "/" + directory.name + '">' + directory.name + '</a></td></tr>';
-                $('#directories tbody').append(rowMarkup);
-            });
+            selectedShare = params.share || qs("share");
+            selectedDirectory = params.directory || qs("directory");
         }
-        catch(err) {
-            $('#notification .message').text(err.body.Code);
-            $('#notification').show();
+
+
+        if (!!selectedShare) {
+            selectedShareURL = azfile.ShareURL.fromServiceURL(serviceURL, selectedShare);
+            selectedDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, "");
+        }
+
+        if (!!selectedDirectory && !!selectedShareURL) {
+            selectedDirectory = trimChar(selectedDirectory, "/");
+            selectedDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, selectedDirectory);
         }
     }
 
-    async function displayHeirarchy(selectedShare, selectedDirectory) {
-        var selectedDirectories = selectedDirectory.split('/');
-        var totalDirs = selectedDirectories.length - 1;
-        var path = "";
-        $.each(selectedDirectories, function (key, dir) {
-            path = path + '/' + dir;
-            var linkClass = "nav-link";
-            if (key == totalDirs) {
-                linkClass += " active";
-            }
-            $('#path').append('<a class="' + linkClass + '" href="?share=' + selectedShare + '&directory=' + path + '">' + dir + '/</a>');
-        })
-    }
-
-    async function seedFile(currentFile) {
-        try{
-            var fileURL = azfile.FileURL.fromDirectoryURL(currentDirectoryURL, currentFile.name);
-            var fileCreateResponse = fileURL.create(azfile.Aborter.none, currentFile.size);
-            marker = fileCreateResponse.nextMarker;
-            var putUrl = fileURL.url + "&comp=range";
-            $('#fileupload').fileupload('option', 'url', putUrl);
-            var contentRange = (currentFile.size - 1);
-            var headers = {
-                "x-ms-range": "bytes=0-" + contentRange,
-                "x-ms-write": "update",
-                "x-ms-version": "2018-11-09",
-            };
-            $('#fileupload').fileupload('option', 'headers', headers);
-            $('#fileupload').fileupload('option', 'contentRange', contentRange);
-        }
-        catch(err) {
-            $('#notification .message').text(err.body.Code);
-            $('#notification').show();
-        }
-    }
-
-    async function createNewFolder(serviceURL, selectedShare) {
-        try{
-            var directoryName = $('#newfoldername').val();
-            var newDirectory = selectedDirectory + "/" + directoryName;
-            newDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, newDirectory);
-            await newDirectoryURL.create(azfile.Aborter.none);
-            console.log(`Create directory ${directoryName} successfully, redirecting....`);
-            window.location.href += encodeURI(`/${directoryName}`);
-        }
-        catch(err) {
-            $('#notification .message').text(err.body.Code);
-            $('#notification').show();
-        }
-    }
-
-    async function deleteFile(currentFile) {
-        var name = $(currentFile).data("name");
-        try{
-            var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
-            var fileDeleteResponse = await fileURL.delete();
-            console.log(`Delete file ${name} successful.`)
-            window.location.reload(true);
-        }        
-        catch(err) {
-            $('#notification .message').text(err.body.Code + " - " + name);
-            $('#notification').show();
-        }
-    }
-
-    async function deleteFolder(currentFolder) {
-        var name = $(currentFolder).data("name");
-        try{
-            var directory = $(currentFolder).data("directory");
-            var fullPath = `${directory}/${name}`;
-            var directoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, fullPath);
-            var directoryDeleteResponse = await directoryURL.delete();
-            console.log(`Delete folder ${name} successful.`)
-            window.location.reload(true);
-        }        
-        catch(err) {
-            $('#notification .message').text(err.body.Code + " - " + name);
-            $('#notification').show();
-        }
-    }
-
-    async function downloadFile(currentFile) {
-        var name = $(currentFile).data("name");
-        try{
-            var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
-            var fileDownloadResponse = await fileURL.download();
-            console.log(`Download file ${name} successful.`);
-            var blob = await fileDownloadResponse.blobBody;
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none"
-            a.href = url;
-            a.download = name;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }        
-        catch(err) {
-            $('#notification .message').text(err.body.Code + " - " + name);
-            $('#notification').show();
-        }
-    }
-
-    /* Bound functions */
-    $(document).ready(function () {
+    function renderFilesDirs() {
         listShares(selectedShare);
         if (!!selectedShare && !selectedDirectory) {
             listDirectoriesAndFiles(selectedShare, '', selectedDirectoryURL);
+            $('#path').empty();
         }
         else if (!!selectedShare && !!selectedDirectory) {
             listDirectoriesAndFiles(selectedShare, selectedDirectory, selectedDirectoryURL);
             displayHeirarchy(selectedShare, selectedDirectory);
         }
+    }
 
-        // needed to render the result after upload since there is no payload back
-        function processEmptyFiles(data) {
-            if (data.textStatus == "success") {
-                var dummyFile = {
-                    deleteType: '',
-                    deleteUrl: '',
-                    name: data.files[0].name,
-                    size: data.files[0].size,
-                    type: data.files[0].type,
-                    url: ''
-                };
-                return [dummyFile];
-            }
-            return [];
-        };
-
-        // initialize the actual uploader, overriding the getFilesFromResponse with our `processEmptyFiles` function
+    // initialize the actual uploader, overriding the getFilesFromResponse with our `processEmptyFiles` function
+    function recreateUpload() {
+        //$('#fileupload').fileupload('destroy');
         $('#fileupload').fileupload({
             type: 'PUT',
             dataType: 'xml',
@@ -216,20 +75,195 @@
         });
 
         $('#fileupload').bind('fileuploaddone', function (e, data) {
-            console.log(e, data);
+            console.log("Refreshing file and directory listing...");
+            renderFilesDirs()
         });
+    }
 
-        $('#newfolderform').on('submit', function (e) { //use on if jQuery 1.7+
-            e.preventDefault();  //prevent form from submitting
-            createNewFolder(serviceURL, selectedShare);
-        });
+    /* Async calls */
+    async function listShares(selectedShare) {
+        var listSharesResponse = await serviceURL.listSharesSegment(azfile.Aborter.none);
+        marker = listSharesResponse.nextMarker;
+        $('#shares').empty();
+        $.each(listSharesResponse.shareItems, function (key, share) {
+            var shareURL = azfile.ShareURL.fromServiceURL(serviceURL, share.name);
+            var linkClass = "";
+            if (selectedShare == share.name) {
+                linkClass += " active";
+            }
+            $('#shares').append('<span class="btn btn-link ' + linkClass + '" onclick="setState(`' + share.name + '`,``)">' + share.name + '</span>');
+        })
+    }
+
+    async function listDirectoriesAndFiles(selectedShare, selectedDirectory, directoryUrl) {
+        try {
+            var listFilesAndDirectoriesResponse = await directoryUrl.listFilesAndDirectoriesSegment(azfile.Aborter.none);
+            marker = listFilesAndDirectoriesResponse.nextMarker;
+
+            $('#directories tbody').empty();
+            //for each file in share/dir
+            $.each(listFilesAndDirectoriesResponse.segment.fileItems, function (key, file) {
+                var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
+                    '<td class="text-center"><button class="btn btn-danger" ><i class="fas fa-trash" onclick="deleteFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"></i></button></td>' +
+                    '<td><span class="btn btn-link" onclick="downloadFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '">' + file.name + '</span></td></tr>';
+                $('#directories tbody').append(rowMarkup);
+            });
+
+            //for each dir in share/dir
+            $.each(listFilesAndDirectoriesResponse.segment.directoryItems, function (key, directory) {
+                var rowMarkup = '<tr><td class="text-center"><i class="fas fa-folder"></i></td>' +
+                    '<td class="text-center"><button class="btn btn-danger" ><i class="fas fa-trash" onclick="deleteFolder(this)" data-directory="' + selectedDirectory + '" data-name="' + directory.name + '"></button></i></td>' +
+                    '<td><button class="btn btn-link" onclick="setState(`' + selectedShare + '`, `' + selectedDirectory + "/" + directory.name + '`)">' + directory.name + '</button></td></tr>';
+                $('#directories tbody').append(rowMarkup);
+            });
+        }
+        catch (err) {
+            $('#notification .message').text(err.body.Code);
+            $('#notification').show();
+        }
+    }
+
+    function setState(share, directory) {
+        params.share = selectedShare = share;
+        params.directory = selectedDirectory = directory;
+        init();
+        renderFilesDirs();
+    }
+
+    async function displayHeirarchy(selectedShare, selectedDirectory) {
+        var selectedDirectories = selectedDirectory.split('/');
+        var totalDirs = selectedDirectories.length - 1;
+        var path = "";
+        $('#path').empty();
+        $('#path').append('<button class="btn btn-link nav-link" onclick="setState(`' + selectedShare + '`,`/`)" >/</button>');
+        $.each(selectedDirectories, function (key, dir) {
+            path = path + '/' + dir;
+            var linkClass = "nav-link";
+            if (key == totalDirs) {
+                linkClass += " active";
+            }
+            $('#path').append('<button class="btn btn-link ' + linkClass + '" onclick="setState(`' + selectedShare + '`, `' + encodeURI(path) + '`)">' + dir + '/</button >');
+        })
+    }
+
+    function seedFile(currentFile) {
+        try {
+            var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, currentFile.name);
+            var fileCreateResponse = fileURL.create(azfile.Aborter.none, currentFile.size);
+            marker = fileCreateResponse.nextMarker;
+            var putUrl = fileURL.url + "&comp=range";
+            $('#fileupload').fileupload('option', 'url', putUrl);
+            var contentRange = (currentFile.size - 1);
+            var headers = {
+                "x-ms-range": "bytes=0-" + contentRange,
+                "x-ms-write": "update",
+                "x-ms-version": "2018-11-09",
+            };
+            $('#fileupload').fileupload('option', 'headers', headers);
+            $('#fileupload').fileupload('option', 'contentRange', contentRange);
+        }
+        catch (err) {
+            $('#notification .message').text(err.body.Code);
+            $('#notification').show();
+        }
+    }
+
+    async function createNewFolder() {
+        try {
+            var directoryName = $('#newfoldername').val();
+            var newDirectory = selectedDirectory + "/" + directoryName;
+            newDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, newDirectory);
+            await newDirectoryURL.create(azfile.Aborter.none);
+            console.log(`Create directory ${directoryName} successfully, redirecting....`);
+            setState(selectedShare, newDirectory);
+            $('#pills-files-tab').tab('show');
+        }
+        catch (err) {
+            $('#notification .message').text(err.body.Code);
+            $('#notification').show();
+        }
+    }
+
+    async function deleteFile(currentFile) {
+        var name = $(currentFile).data("name");
+        try {
+            var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
+            var fileDeleteResponse = await fileURL.delete();
+            console.log(`Delete file ${name} successful.`)
+            $(currentFile).closest('tr').remove();
+        }
+        catch (err) {
+            $('#notification .message').text(err.body.Code + " - " + name);
+            $('#notification').show();
+        }
+    }
+
+    async function deleteFolder(currentFolder) {
+        var name = $(currentFolder).data("name");
+        try {
+            var directory = $(currentFolder).data("directory");
+            var fullPath = `${directory}/${name}`;
+            var directoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, fullPath);
+            var directoryDeleteResponse = await directoryURL.delete();
+            console.log(`Delete folder ${name} successful.`)
+            $(currentFolder).closest('tr').remove();
+        }
+        catch (err) {
+            $('#notification .message').text(err.body.Code + " - " + name);
+            $('#notification').show();
+        }
+    }
+
+    async function downloadFile(currentFile) {
+        var name = $(currentFile).data("name");
+        try {
+            var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
+            var fileDownloadResponse = await fileURL.download();
+            console.log(`Download file ${name} successful.`);
+            var blob = await fileDownloadResponse.blobBody;
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none"
+            a.href = url;
+            a.download = name;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        catch (err) {
+            $('#notification .message').text(err.body.Code + " - " + name);
+            $('#notification').show();
+        }
+    }
+
+    // needed to render the result after upload since there is no payload back
+    function processEmptyFiles(data) {
+        if (data.textStatus == "success") {
+            var dummyFile = {
+                deleteType: '',
+                deleteUrl: '',
+                name: data.files[0].name,
+                size: data.files[0].size,
+                type: data.files[0].type,
+                url: ''
+            };
+            return [dummyFile];
+        }
+        return [];
+    };
+
+    function clearCompletedUpload(currentRow) {
+        $(currentRow).closest('tr.template-download').remove();
+    }
+
+    /* Bound functions */
+    $(document).ready(function () {
+        init();
+        renderFilesDirs();
+        recreateUpload();
     });
 
     /* Helpers */
-    function refreshPage(){
-        window.location.reload(true);
-    }
-
     function qs(key) {
         key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
         var match = location.search.match(new RegExp("[?&]" + key + "=([^&]+)(&|$)"));
@@ -245,59 +279,55 @@
         }
         return string;
     };</script><script id="template-upload" type="text/x-tmpl">{% for (var i=0, file; file=o.files[i]; i++) { %}
-        <tr class="template-upload fade show">
-            <td>
-                <span class="preview"></span>
-            </td>
-            <td>
-                {% if (window.innerWidth > 480 || !o.options.loadImageFileTypes.test(file.type)) { %}
-                <p class="name">{%=file.name%}</p>
-                {% } %}
-                <strong class="error text-danger"></strong>
-            </td>
-            <td>
-                <p class="size">Processing...</p>
-                <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar progress-bar-success" style="width:0%;"></div></div>
-            </td>
-            <td>
-                {% if (!i && !o.options.autoUpload) { %}
-                <button class="btn btn-primary start" disabled data-toggle="tooltip" title="Start upload for {%=file.name%}">
-                    <span class="fas fa-upload" aria-label="start upload for all"></span>
-                </button>
-                {% } %}
-                {% if (!i) { %}
-                <button class="btn btn-warning cancel" data-toggle="tooltip" title="Cancel upload for {%=file.name%}">
-                    <span class="fas fa-ban" aria-label="cancel upload for all"></span>
-                </button>
-                {% } %}
-            </td>
-        </tr>
-        {% } %}</script><script id="template-download" type="text/x-tmpl">{% for (var i=0, file; file=o.files[i]; i++) { %}
-        <tr class="template-download fade show">
-            <td>
-                <span class="preview">
-                    <button class="btn btn-success"><i class="fas fa-check"></i> Uploaded Successfully!</button>
-                </span>
-            </td>
-            <td>
-                {% if (window.innerWidth > 480 || !file.thumbnailUrl) { %}
-                <p class="name">
-                    {% if (file.url) { %}
-                    <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?'data-gallery':''%}>{%=file.name%}</a>
-                    {% } else { %}
-                    <span>{%=file.name%}</span>
-                    {% } %}
-                </p>
-                {% } %}
-                {% if (file.error) { %}
-                <div><span class="label label-danger">Error</span> {%=file.error%}</div>
-                {% } %}
-            </td>
-            <td>
-                <span class="size">{%=o.formatFileSize(file.size)%}</span>
-            </td>
-            <td>
-                
-            </td>
-        </tr>
-        {% } %}</script></html>
+    <tr class="template-upload fade show">
+        <td>
+            <span class="preview"></span>
+        </td>
+        <td>
+            {% if (window.innerWidth > 480 || !o.options.loadImageFileTypes.test(file.type)) { %}
+            <p class="name">{%=file.name%}</p>
+            {% } %}
+            <strong class="error text-danger"></strong>
+        </td>
+        <td>
+            <p class="size">Processing...</p>
+            <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar progress-bar-success" style="width:0%;"></div></div>
+        </td>
+        <td>
+            {% if (!i && !o.options.autoUpload) { %}
+            <button class="btn btn-primary start" disabled data-toggle="tooltip" title="Start upload for {%=file.name%}">
+                <span class="fas fa-upload" aria-label="start upload for all"></span>
+            </button>
+            {% } %}
+            {% if (!i) { %}
+            <button class="btn btn-warning cancel" data-toggle="tooltip" title="Cancel upload for {%=file.name%}">
+                <span class="fas fa-ban" aria-label="cancel upload for all"></span>
+            </button>
+            {% } %}
+        </td>
+    </tr>
+    {% } %}</script><script id="template-download" type="text/x-tmpl">{% for (var i=0, file; file=o.files[i]; i++) { %}
+    <tr class="template-download fade show">
+        <td>
+            <span class="preview">
+                <button class="btn btn-success"><i class="fas fa-check"></i> Uploaded Successfully!</button>
+            </span>
+        </td>
+        <td>
+            {% if (window.innerWidth > 480 || !file.thumbnailUrl) { %}
+            <p class="name">
+                <span>{%=file.name%}</span>
+            </p>
+            {% } %}
+            {% if (file.error) { %}
+            <div><span class="label label-danger">Error</span> {%=file.error%}</div>
+            {% } %}
+        </td>
+        <td>
+            <span class="size">{%=o.formatFileSize(file.size)%}</span>
+        </td>
+        <td>
+            <button class="btn bt-secondary" onclick="clearCompletedUpload(this)"><i class="fas fa-times"></i></button>
+        </td>
+    </tr>
+    {% } %}</script></html>

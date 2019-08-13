@@ -119,7 +119,24 @@
                 </div>
             </div>
         </div>
-
+        <div class="modal fade" id="documentViewer" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <embed class="content" width="774" height="500" ></embed>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn btn-primary download-link" download><span class="fas fa-download"></span>&nbsp;Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
@@ -130,6 +147,9 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
 
 <!-- For dev purposes you can uncomment this block and comment out the script.js -->
 <!-- <script src="azure-storage-file.min.js"></script>
@@ -149,6 +169,23 @@
 <!--<script type="text/javascript" src="../ClientGlobalContext.js.aspx"></script>-->
 
 <script type="text/javascript">
+ /*polyfills*/
+ if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        value: function(search, pos) {
+            pos = !pos || pos < 0 ? 0 : +pos;
+            return this.substring(pos, pos + search.length) === search;
+        }
+    });
+}
+if (!String.prototype.endsWith) {
+	String.prototype.endsWith = function(search, this_len) {
+		if (this_len === undefined || this_len > this.length) {
+			this_len = this.length;
+		}
+		return this.substring(this_len - search.length, this_len) === search;
+	};
+}
 
     /* Globals */
     var dataFromQS = null;
@@ -157,7 +194,6 @@
     var serviceGroup = null;
     var anonCred = null;
     var pipeline = null;
-    var marker;
     var serviceURL = null;
     var selectedShare = null;
     var selectedDirectory = null;
@@ -171,12 +207,11 @@
 
             /* YOUR VALUES NEED TO BE PUT IN HERE */
             sasToken = params.sasToken || qs("sasToken");
-            serviceGroup = params.serviceGroup || qs("serviceGroup");;
+            serviceGroup = params.serviceGroup || qs("serviceGroup");
 
             /* GLOBALS */
             anonCred = new azfile.AnonymousCredential();
             pipeline = azfile.StorageURL.newPipeline(anonCred);
-            marker;
             serviceURL = new azfile.ServiceURL(
                 serviceGroup + sasToken,
                 pipeline
@@ -233,41 +268,43 @@
     }
 
     /* Async calls */
-    async function listShares(selectedShare) {
-        var listSharesResponse = await serviceURL.listSharesSegment(azfile.Aborter.none);
-        marker = listSharesResponse.nextMarker;
-        $('#shares').empty();
-        $.each(listSharesResponse.shareItems, function (key, share) {
-            var shareURL = azfile.ShareURL.fromServiceURL(serviceURL, share.name);
-            var linkClass = "";
-            if (selectedShare == share.name) {
-                linkClass += " active";
-            }
-            $('#shares').append('<span class="btn btn-link ' + linkClass + '" onclick="setState(`' + share.name + '`,``)">' + share.name + '</span>');
-        })
+    function listShares(selectedShare) {
+        var listSharesResponse = serviceURL.listSharesSegment(azfile.Aborter.none);
+        listSharesResponse.then(function(data){
+            $('#shares').empty();
+            $.each(data.shareItems, function (key, share) {
+                var shareURL = azfile.ShareURL.fromServiceURL(serviceURL, share.name);
+                var linkClass = "";
+                if (selectedShare == share.name) {
+                    linkClass += " active";
+                }
+                $('#shares').append('<span class="btn btn-link ' + linkClass + '" onclick="setState(\'' + share.name + '\',\'\')">' + share.name + '</span>');
+            })
+        });
     }
 
-    async function listDirectoriesAndFiles(selectedShare, selectedDirectory, directoryUrl) {
+    function listDirectoriesAndFiles (selectedShare, selectedDirectory, directoryUrl) {
         try {
-            var listFilesAndDirectoriesResponse = await directoryUrl.listFilesAndDirectoriesSegment(azfile.Aborter.none);
-            marker = listFilesAndDirectoriesResponse.nextMarker;
+            var listFilesAndDirectoriesResponse = directoryUrl.listFilesAndDirectoriesSegment(azfile.Aborter.none);
+            listFilesAndDirectoriesResponse.then(function(data){
+                $('#directories tbody').empty();
+                //for each file in share/dir
+                $.each(data.segment.fileItems, function (key, file) {
+                    var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
+                        '<td class="text-center"><button class="btn btn-danger" onclick="deleteFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"><i class="fas fa-trash" ></i></button></td>' +
+                        '<td><span class="btn btn-link" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"  data-toggle="modal" data-target="#documentViewer">' + file.name + '</span></td></tr>';
+                    $('#directories tbody').append(rowMarkup);
+                });
 
-            $('#directories tbody').empty();
-            //for each file in share/dir
-            $.each(listFilesAndDirectoriesResponse.segment.fileItems, function (key, file) {
-                var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
-                    '<td class="text-center"><button class="btn btn-danger" ><i class="fas fa-trash" onclick="deleteFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"></i></button></td>' +
-                    '<td><span class="btn btn-link" onclick="downloadFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '">' + file.name + '</span></td></tr>';
-                $('#directories tbody').append(rowMarkup);
+                //for each dir in share/dir
+                $.each(data.segment.directoryItems, function (key, directory) {
+                    var rowMarkup = '<tr><td class="text-center"><i class="fas fa-folder"></i></td>' +
+                        '<td class="text-center"><button class="btn btn-danger" onclick="deleteFolder(this)" data-directory="' + selectedDirectory + '" data-name="' + directory.name + '"><i class="fas fa-trash" ></button></i></td>' +
+                        '<td><button class="btn btn-link" onclick="setState(\'' + selectedShare + '\', \'' + selectedDirectory + "/" + directory.name + '\')">' + directory.name + '</button></td></tr>';
+                    $('#directories tbody').append(rowMarkup);
+                });
             });
 
-            //for each dir in share/dir
-            $.each(listFilesAndDirectoriesResponse.segment.directoryItems, function (key, directory) {
-                var rowMarkup = '<tr><td class="text-center"><i class="fas fa-folder"></i></td>' +
-                    '<td class="text-center"><button class="btn btn-danger" ><i class="fas fa-trash" onclick="deleteFolder(this)" data-directory="' + selectedDirectory + '" data-name="' + directory.name + '"></button></i></td>' +
-                    '<td><button class="btn btn-link" onclick="setState(`' + selectedShare + '`, `' + selectedDirectory + "/" + directory.name + '`)">' + directory.name + '</button></td></tr>';
-                $('#directories tbody').append(rowMarkup);
-            });
         }
         catch (err) {
             $('#notification .message').text(err.body.Code);
@@ -282,19 +319,19 @@
         renderFilesDirs();
     }
 
-    async function displayHeirarchy(selectedShare, selectedDirectory) {
+    function displayHeirarchy(selectedShare, selectedDirectory) {
         var selectedDirectories = selectedDirectory.split('/');
         var totalDirs = selectedDirectories.length - 1;
         var path = "";
         $('#path').empty();
-        $('#path').append('<button class="btn btn-link nav-link" onclick="setState(`' + selectedShare + '`,`/`)" >/</button>');
+        $('#path').append('<button class="btn btn-link nav-link" onclick="setState(\'' + selectedShare + '\',\'/\')" >/</button>');
         $.each(selectedDirectories, function (key, dir) {
             path = path + '/' + dir;
             var linkClass = "nav-link";
             if (key == totalDirs) {
                 linkClass += " active";
             }
-            $('#path').append('<button class="btn btn-link ' + linkClass + '" onclick="setState(`' + selectedShare + '`, `' + encodeURI(path) + '`)">' + dir + '/</button >');
+            $('#path').append('<button class="btn btn-link ' + linkClass + '" onclick="setState(\'' + selectedShare + '\', \'' + encodeURI(path) + '\')">' + dir + '/</button >');
         })
     }
 
@@ -302,7 +339,6 @@
         try {
             var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, currentFile.name);
             var fileCreateResponse = fileURL.create(azfile.Aborter.none, currentFile.size);
-            marker = fileCreateResponse.nextMarker;
             var putUrl = fileURL.url + "&comp=range";
             $('#fileupload').fileupload('option', 'url', putUrl);
             var contentRange = (currentFile.size - 1);
@@ -320,15 +356,17 @@
         }
     }
 
-    async function createNewFolder() {
+    function createNewFolder() {
         try {
             var directoryName = $('#newfoldername').val();
             var newDirectory = selectedDirectory + "/" + directoryName;
             newDirectoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, newDirectory);
-            await newDirectoryURL.create(azfile.Aborter.none);
-            console.log(`Create directory ${directoryName} successfully, redirecting....`);
-            setState(selectedShare, newDirectory);
-            $('#pills-files-tab').tab('show');
+            var newDirectoryCreateResponse = newDirectoryURL.create(azfile.Aborter.none);
+            newDirectoryCreateResponse.then(function(data){
+                console.log('Create directory ' + directoryName + 'successfully, redirecting....');
+                setState(selectedShare, newDirectory);
+                $('#pills-files-tab').tab('show');
+            })
         }
         catch (err) {
             $('#notification .message').text(err.body.Code);
@@ -336,13 +374,17 @@
         }
     }
 
-    async function deleteFile(currentFile) {
+    function deleteFile(currentFile) {
         var name = $(currentFile).data("name");
+        $(currentFile).closest('tr').addClass("table-warning");
         try {
             var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
-            var fileDeleteResponse = await fileURL.delete();
-            console.log(`Delete file ${name} successful.`)
-            $(currentFile).closest('tr').remove();
+            var fileDeleteResponse = fileURL.delete();
+            fileDeleteResponse.then(function(data){
+                console.log('Delete file ' + name + 'successful.')
+                $(currentFile).closest('tr').remove();
+            })
+
         }
         catch (err) {
             $('#notification .message').text(err.body.Code + " - " + name);
@@ -350,15 +392,18 @@
         }
     }
 
-    async function deleteFolder(currentFolder) {
+    function deleteFolder(currentFolder) {
         var name = $(currentFolder).data("name");
+        $(currentFolder).closest('tr').addClass("table-warning");
         try {
             var directory = $(currentFolder).data("directory");
-            var fullPath = `${directory}/${name}`;
+            var fullPath = directory + "/" + name;
             var directoryURL = azfile.DirectoryURL.fromShareURL(selectedShareURL, fullPath);
-            var directoryDeleteResponse = await directoryURL.delete();
-            console.log(`Delete folder ${name} successful.`)
-            $(currentFolder).closest('tr').remove();
+            var directoryDeleteResponse = directoryURL.delete();
+            directoryDeleteResponse.then(function(data){
+                console.log('Delete folder ' + name + 'successful.')
+                $(currentFolder).closest('tr').remove();
+            });
         }
         catch (err) {
             $('#notification .message').text(err.body.Code + " - " + name);
@@ -366,27 +411,73 @@
         }
     }
 
-    async function downloadFile(currentFile) {
-        var name = $(currentFile).data("name");
-        try {
+    // function downloadFile(currentFile) {
+    //     var name = $(currentFile).data("name");
+    //     try {
+    //         var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
+    //         var fileDownloadResponse = fileURL.download();
+
+    //         fileDownloadResponse.then(function (data) {
+    //             console.log('Download file ' + name + 'successful.');
+    //             var getBlob = data.blobBody;
+    //             getBlob.then(function (blob) {
+    //                 var url = window.URL.createObjectURL(blob);
+    //                 var a = document.createElement("a");
+    //                 document.body.appendChild(a);
+    //                 a.style = "display: none"
+    //                 a.href = url;
+    //                 a.download = name;
+    //                 a.click();
+    //                 window.URL.revokeObjectURL(url);
+    //             })
+    //         })
+    //     }
+    //     catch (err) {
+    //         $('#notification .message').text(err.body.Code + " - " + name);
+    //         $('#notification').show();
+    //     }
+    // }
+
+    function renderPreview(target, modal) {
+            modal.find('.modal-body .content').attr('src', "");
+            modal.find('.modal-body .content').attr('type', "");
+            var button = $(target) // Button that triggered the modal
+            //var url = button.data('document-url') // Extract info from data-* attributes
+            var name = button.data('name') // Extract info from data-* attributes
+
             var fileURL = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, name);
-            var fileDownloadResponse = await fileURL.download();
-            console.log(`Download file ${name} successful.`);
-            var blob = await fileDownloadResponse.blobBody;
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none"
-            a.href = url;
-            a.download = name;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-        catch (err) {
-            $('#notification .message').text(err.body.Code + " - " + name);
-            $('#notification').show();
-        }
+            var fileDownloadResponse = fileURL.download();
+            fileDownloadResponse.then(function(data){
+                console.log('Download file ' + name + 'successful.');
+                var getBlob = data.blobBody;
+                getBlob.then(function(blob){
+                    console.log(blob);
+
+                    var fileReader = new FileReader();
+                    fileReader.onload = function() {
+                        arrayBuffer = this.result;
+                        var base64string = arrayBufferToBase64(arrayBuffer);
+                        var blobTybe = getMimeType(name);
+                        var objectUrl = 'data:' + blobTybe + ';base64,' + base64string;
+                        modal.find('.modal-title').text('Viewing ' + name)
+                        modal.find('.modal-body .content').attr('src', objectUrl);
+                        modal.find('.modal-body .content').attr('type', blobTybe);
+                        modal.find('.download-link').attr("href", objectUrl);
+                        modal.find('.download-link').attr("download", name);
+                    };
+                    fileReader.readAsArrayBuffer(blob);
+                })
+            })
     }
+
+    function initDocumentPreviewer(){
+        $('#documentViewer').on('show.bs.modal', function (event) {
+            var modal = $(this);
+            renderPreview(event.relatedTarget, modal);
+        });
+    }
+
+    
 
     // needed to render the result after upload since there is no payload back
     function processEmptyFiles(data) {
@@ -413,6 +504,7 @@
         init();
         renderFilesDirs();
         recreateUpload();
+        initDocumentPreviewer();
     });
 
     /* Helpers */
@@ -431,6 +523,47 @@
         }
         return string;
     };
+
+        
+    function arrayBufferToBase64( buffer ) {
+        var binary = '';
+        var bytes = new Uint8Array( buffer );
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode( bytes[ i ] );
+        }
+        return window.btoa( binary );
+    }
+
+    function getMimeType(fileName){
+        mimeTypes = {".au": "audio/basic", ".avi" : "video/avi", ".bmp" : "image/bmp", ".bz2" : "application/x-bzip2", ".css" : "text/css",
+                    ".dtd" : "application/xml-dtd", ".doc" : "application/msword", ".exe" : "application/octet-stream", ".gif" : "image/gif",
+                    ".gz" : "application/x-gzip", ".hqx" : "application/mac-binhex40", ".html" : "text/html", ".jar" : "application/java-archive",
+                    ".jpg" : "image/jpeg", ".js" : "application/x-javascript", ".midi" : "audio/x-midi", ".mp3" : "audio/mpeg",
+                    ".mpeg" : "video/mpeg", ".ogg" : "application/ogg", ".pdf" : "application/pdf", ".pl" : "application/x-perl",
+                    ".png" : "image/png", ".ppt" : "application/vnd.ms-powerpoint", ".ps" : "application/postscript",
+                    ".qt" : "video/quicktime", ".ra" : "audio/x-pn-realaudio", ".ram" : "audio/x-pn-realaudio", ".rdf" : "application/rdf",
+                    ".rtf" : "application/rtf", ".sgml" : "text/sgml", ".sit" : "application/x-stuffit", ".svg" : "image/svg+xml",
+                    ".swf" : "application/x-shockwave-flash", ".tar.gz" : "application/x-tar", ".tgz" : "application/x-tar", ".tiff" : "image/tiff",
+                    ".tsv" : "text/tab-separated-values", ".txt" : "text/plain", ".wav" : "audio/wav", ".xls" : "application/vnd.ms-excel",
+                    ".xml" : "application/xml", ".zip" : "application/zip",
+                    ".dot" : "application/msword",".docx" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    ".dotx" : "application/vnd.openxmlformats-officedocument.wordprocessingml.template",".docm" : "application/vnd.ms-word.document.macroEnabled.12",
+                    ".dotm" : "application/vnd.ms-word.template.macroEnabled.12",".xlt" : "application/vnd.ms-excel",
+                    ".xla" : "application/vnd.ms-excel",".xlsx" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    ".xltx" : "application/vnd.openxmlformats-officedocument.spreadsheetml.template",".xlsm" : "application/vnd.ms-excel.sheet.macroEnabled.12",
+                    ".xltm" : "application/vnd.ms-excel.template.macroEnabled.12",".xlam" : "application/vnd.ms-excel.addin.macroEnabled.12",
+                    ".xlsb" : "application/vnd.ms-excel.sheet.binary.macroEnabled.12",".pot" : "application/vnd.ms-powerpoint",
+                    ".pps" : "application/vnd.ms-powerpoint",".ppa" : "application/vnd.ms-powerpoint",".pptx" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    ".potx" : "application/vnd.openxmlformats-officedocument.presentationml.template",".ppsx" : "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+                    ".ppam" : "application/vnd.ms-powerpoint.addin.macroEnabled.12",".pptm" : "application/vnd.ms-powerpoint.presentation.macroEnabled.12",
+                    ".potm" : "application/vnd.ms-powerpoint.template.macroEnabled.12",".ppsm" : "application/vnd.ms-powerpoint.slideshow.macroEnabled.12",
+                    ".mdb" : "application/vnd.ms-access"
+                };
+        
+        var extension = fileName.split('.').pop();
+        return mimeTypes['.' + extension ] || "application/octet-stream";
+    }
 
 </script>
 

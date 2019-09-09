@@ -24,13 +24,13 @@
             <span class="message"></span>
         </div>
         <div class="row p-2">
-            <h3 class="col-lg-1 col-md-3"><i class="fas fa-folder-open"></i>&nbsp;&nbsp;Path</h3>
-            <nav id="path" class="nav nav-pills nav-justified col-lg-11 col-md-9">
+            <h3 class="col-lg-2 col-md-3"><i class="fas fa-folder-open"></i>&nbsp;&nbsp;Path</h3>
+            <nav id="path" class="nav nav-pills nav-justified col-lg-10 col-md-9">
             </nav>
         </div>
         <div class="row p-2">
-            <h3 class="col-lg-1 col-md-3"><i class="fas fa-directions"></i>&nbsp;&nbsp;Action</h3>
-            <ul class="nav nav-pills mb-3 col-lg-11 col-md-9" id="pills-tab" role="tablist">
+            <h3 class="col-lg-2 col-md-3"><i class="fas fa-directions"></i>&nbsp;&nbsp;Action</h3>
+            <ul class="nav nav-pills mb-3 col-lg-10 col-md-9" id="pills-tab" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="pills-files-tab" data-toggle="pill" href="#pills-files" role="tab"
                        aria-controls="pills-files" aria-selected="true">Files and Folders</a>
@@ -150,6 +150,7 @@
 <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
 
 <!-- For dev purposes you can uncomment this block and comment out the script.js -->
 <!-- <script src="azure-storage-file.min.js"></script>
@@ -290,18 +291,18 @@ if (!String.prototype.endsWith) {
                 $('#directories tbody').empty();
                 //for each file in share/dir
                 $.each(data.segment.fileItems, function (key, file) {
-                    var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
-                        '<td class="text-center"><button class="btn btn-danger" onclick="deleteFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"><i class="fas fa-trash" ></i></button></td>' +
-                        '<td><span class="btn btn-link" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"  data-toggle="modal" data-target="#documentViewer">' + file.name + '</span></td></tr>';
-                    $('#directories tbody').append(rowMarkup);
+                    fileMetadata(selectedShare, selectedDirectory, file)
+
+
+                    
                 });
 
                 //for each dir in share/dir
                 $.each(data.segment.directoryItems, function (key, directory) {
-                    var rowMarkup = '<tr><td class="text-center"><i class="fas fa-folder"></i></td>' +
-                        '<td class="text-center"><button class="btn btn-danger" onclick="deleteFolder(this)" data-directory="' + selectedDirectory + '" data-name="' + directory.name + '"><i class="fas fa-trash" ></button></i></td>' +
-                        '<td><button class="btn btn-link" onclick="setState(\'' + selectedShare + '\', \'' + selectedDirectory + "/" + directory.name + '\')">' + directory.name + '</button></td></tr>';
-                    $('#directories tbody').append(rowMarkup);
+
+                    directoryMetadata(selectedShare, selectedDirectory, directory)
+
+
                 });
             });
 
@@ -310,6 +311,33 @@ if (!String.prototype.endsWith) {
             $('#notification .message').text(err.body.Code);
             $('#notification').show();
         }
+    }
+
+    function directoryMetadata(selectedShare, selectedDirectory, directory){
+        var newDirectory = selectedDirectory + '/' + directory.name;
+        var directoryUrl = azfile.DirectoryURL.fromShareURL(selectedShareURL, newDirectory);
+        var directoryUrlGetPropertiesResponse = directoryUrl.listFilesAndDirectoriesSegment(azfile.Aborter.none);
+
+        directoryUrlGetPropertiesResponse.then(function(data){
+            var dirCount = data.segment.directoryItems.length;
+            var fileCount = data.segment.fileItems.length;
+            var rowMarkup = '<tr><td class="text-center"><i class="fas fa-folder"></i></td>' +
+                        '<td class="text-center"><button class="btn btn-danger" onclick="deleteFolder(this)" data-directory="' + selectedDirectory + '" data-name="' + directory.name + '"><i class="fas fa-trash" ></button></i></td>' +
+                        '<td><button class="btn btn-link" onclick="setState(\'' + selectedShare + '\', \'' + selectedDirectory + "/" + directory.name + '\')">' + directory.name + ' - (' +fileCount+" folders " + fileCount+ ' files)</button></td></tr>';
+                    $('#directories tbody').append(rowMarkup);
+        });
+    }
+
+    function fileMetadata(selectedShare, selectedDirectory, file){
+        var fileUrl = azfile.FileURL.fromDirectoryURL(selectedDirectoryURL, file.name);
+        var fileUrlGetPropertiesResponse = fileUrl.getProperties(azfile.Aborter.none);
+        fileUrlGetPropertiesResponse.then(function(data){
+            var lastModifiedDate = moment(data.lastModified).fromNow();
+            var rowMarkup = '<tr><td class="text-center"><i class="fas fa-file"></i></td>' +
+                        '<td class="text-center"><button class="btn btn-danger" onclick="deleteFile(this)" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"><i class="fas fa-trash" ></i></button></td>' +
+                        '<td><span class="btn btn-link" data-directory="' + selectedDirectory + '" data-name="' + file.name + '"  data-toggle="modal" data-target="#documentViewer">' + file.name + ' - ('+lastModifiedDate+')</span></td></tr>';
+                    $('#directories tbody').append(rowMarkup);
+        });
     }
 
     function setState(share, directory) {

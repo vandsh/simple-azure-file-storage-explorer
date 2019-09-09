@@ -292,17 +292,11 @@ if (!String.prototype.endsWith) {
                 //for each file in share/dir
                 $.each(data.segment.fileItems, function (key, file) {
                     fileMetadata(selectedShare, selectedDirectory, file)
-
-
-                    
                 });
 
                 //for each dir in share/dir
                 $.each(data.segment.directoryItems, function (key, directory) {
-
                     directoryMetadata(selectedShare, selectedDirectory, directory)
-
-
                 });
             });
 
